@@ -1,0 +1,374 @@
+{
+  "metadata": {
+    "version": "0.1-draft",
+    "created_from": "250-sample advisory dataset + 500-sample weather/soil data",
+    "note": "All thresholds extracted from data patterns. Validate & refine with agronomists before production use.",
+    "crops": ["Tomato", "Wheat", "Paddy", "Chili", "Cotton"],
+    "regions": ["India", "assumed-generic-for-now"]
+  },
+
+  "spray_decision_engine": {
+    "description": "Determines if spray is required based on humidity, temperature, NDVI, and health metrics",
+    "triggers": {
+      "fungal_risk": {
+        "condition": "humidity > 70 AND temperature BETWEEN 20-28°C AND NDVI < 0.70",
+        "action": "Spray fungicide",
+        "chemicals": {
+          "Tomato": "Mancozeb 75% WP",
+          "Wheat": "Chlorpyrifos 20%EC",
+          "Paddy": "Chlorpyrifos 20%EC",
+          "Chili": "Chlorpyrifos 20%EC",
+          "Cotton": "Alpha-cypermethrin 10%EC"
+        },
+        "dose_ml_per_liter": {
+          "Mancozeb 75% WP": 2.5,
+          "Chlorpyrifos 20%EC": 2.0,
+          "Alpha-cypermethrin 10%EC": 0.6
+        }
+      },
+      "pest_infestation": {
+        "condition": "NDVI_drop_detected OR health_percent < 85 OR visual_pest_damage",
+        "action": "Spray insecticide",
+        "chemicals": {
+          "Cotton_sucking_pests": "Profenofos 50%EC",
+          "Cotton_bollworm": "Emamectin benzoate 5SG",
+          "General_pest": "Chlorpyrifos 20%EC"
+        },
+        "dose_ml_per_liter": {
+          "Profenofos 50%EC": 3.0,
+          "Emamectin benzoate 5SG": 0.5,
+          "Chlorpyrifos 20%EC": 2.0
+        }
+      },
+      "preventive_spray": {
+        "description": "Preventive spray during high-risk growth stages",
+        "condition": "growth_stage IN [Flowering, Fruiting, Boll_Dev]",
+        "action": "Spray fungicide preventively"
+      }
+    },
+    "spray_timing": {
+      "early_morning": "Before 9 AM (when wind is low, dew still present)",
+      "late_evening": "After 4 PM (similar conditions)",
+      "avoid": "Mid-day (10 AM - 3 PM) when temperature is high and wind is strong"
+    },
+    "water_application": {
+      "description": "Water volume depends on crop, field size, and spray equipment",
+      "formula": "Water_L_per_acre = dose_ml_per_acre / concentration",
+      "typical_range": "750-2000 liters per acre"
+    }
+  },
+
+  "fertilizer_decision_engine": {
+    "description": "Determines nutrient application based on NDVI, growth stage, and crop type",
+    "primary_trigger": "NDVI < 0.70 OR crop_health < 90%",
+    "crops_always_fertilize_in_certain_stages": {
+      "Paddy": ["Germination", "Vegetative", "Flowering", "Grain_Filling"],
+      "Chili": ["Vegetative", "Flowering", "Fruiting"],
+      "Cotton": ["Germination", "Vegetative", "Flowering", "Boll_Dev"]
+    },
+    "fertilizer_types": {
+      "NPK_19_19_19": {
+        "use_for": "General balanced nutrition for early stages",
+        "typical_dose_kg_per_acre": 24.2,
+        "range": "20-30 kg/acre",
+        "crops": ["Tomato", "Wheat", "Chili", "Cotton"]
+      },
+      "Urea": {
+        "use_for": "Nitrogen supplementation in mid-to-late stages",
+        "typical_dose_kg_per_acre": 50.1,
+        "range": "40-60 kg/acre",
+        "crops": ["Paddy", "Wheat", "Chili", "Cotton"]
+      },
+      "MOP_Muriate_of_Potash": {
+        "use_for": "Potassium supplementation for crop strength",
+        "typical_dose_kg_per_acre": 40.5,
+        "range": "30-50 kg/acre",
+        "crops": ["Paddy", "Tomato", "Cotton", "Chili"]
+      }
+    },
+    "application_methods": {
+      "Drip": "Best for efficient nutrient delivery, water-saving",
+      "Broadcast": "Traditional method, suitable for fields without drip",
+      "Foliar": "For quick nutrient uptake in emergency situations"
+    },
+    "ndvi_based_rules": {
+      "ndvi_above_0.75": "No fertilizer needed (crop healthy)",
+      "ndvi_0.65_to_0.75": "Light nutrition (maintenance dose)",
+      "ndvi_0.55_to_0.65": "Medium nutrition (standard dose)",
+      "ndvi_below_0.55": "Heavy nutrition (2x standard dose)"
+    }
+  },
+
+  "irrigation_decision_engine": {
+    "description": "Determines water requirement based on soil moisture, ET, rainfall, and growth stage",
+    "primary_triggers": {
+      "soil_moisture_low": "Soil_moisture < 35% (varies by crop)",
+      "high_et": "ET > 5mm/day AND soil_moisture < 45%",
+      "upcoming_dry_spell": "Rainfall_forecast < 5mm for next 5 days"
+    },
+    "soil_moisture_thresholds_by_crop": {
+      "Tomato": {
+        "critical_low": 30,
+        "ideal_range": "50-70%",
+        "description": "High water demand, frequent irrigation needed"
+      },
+      "Wheat": {
+        "critical_low": 35,
+        "ideal_range": "50-65%",
+        "description": "Moderate water demand, especially in grain filling"
+      },
+      "Paddy": {
+        "critical_low": 40,
+        "ideal_range": "60-80%",
+        "description": "Aquatic crop, requires standing water in certain stages"
+      },
+      "Chili": {
+        "critical_low": 30,
+        "ideal_range": "45-60%",
+        "description": "Sensitive to drought stress, needs regular irrigation"
+      },
+      "Cotton": {
+        "critical_low": 35,
+        "ideal_range": "50-65%",
+        "description": "Deep-rooted, can tolerate slightly drier soil"
+      }
+    },
+    "irrigation_methods": {
+      "Drip": "Water-efficient, ~60-70% water saving vs flood",
+      "Sprinkler": "Moderate efficiency, good for uneven topography",
+      "Open_Flood": "Traditional, less efficient, ~20-30% water loss"
+    },
+    "water_calculation": {
+      "formula": "Water_Required_L = (ET_c - Rainfall) × Area_acres × 1000 / irrigation_efficiency",
+      "et_coefficient_by_stage": {
+        "Germination": 0.40,
+        "Vegetative": 0.80,
+        "Flowering": 1.10,
+        "Fruiting": 1.10,
+        "Boll_Dev": 0.90,
+        "Grain_Filling": 0.80,
+        "Maturity": 0.40
+      },
+      "reference_ET0_range": "3-7 mm/day (varies by season/region)"
+    },
+    "rainfall_consideration": {
+      "next_5_days_rain_above_20mm": "Skip irrigation, wait for rainfall",
+      "next_5_days_rain_10_20mm": "Reduce water by 30-50%",
+      "next_5_days_rain_below_10mm": "Full irrigation as planned"
+    },
+    "irrigation_frequency": {
+      "high_demand_stages": ["Flowering", "Fruiting"],
+      "frequency": "Every 2-3 days in high demand, every 4-5 days in other stages"
+    }
+  },
+
+  "disease_risk_assessment": {
+    "description": "Predict pest and disease risk based on weather and crop condition",
+    "fungal_diseases": {
+      "triggers": {
+        "high_humidity": "> 75% for 3+ consecutive days",
+        "optimal_temperature": "20-28°C",
+        "leaf_wetness": "Early morning dew or recent rain",
+        "weak_crop": "NDVI < 0.65 or health% < 85"
+      },
+      "high_risk_stages": ["Flowering", "Fruiting", "Grain_Filling"],
+      "risk_score": "(humidity_score * 0.4) + (temp_score * 0.3) + (ndvi_drop_score * 0.3)",
+      "recommendation_at_high_risk": "Spray fungicide preventively"
+    },
+    "pest_pressure": {
+      "triggers": {
+        "warm_temperature": "> 25°C",
+        "low_humidity": "< 60% (some pests prefer drier conditions)",
+        "ndvi_drop": "Drop > 0.05 in 1 week",
+        "visual_damage": "Leaf spots, holes, webbing detected"
+      },
+      "high_risk_crops": ["Cotton", "Chili"],
+      "high_risk_stages": ["Vegetative", "Flowering", "Boll_Dev"],
+      "recommendation_at_high_risk": "Scout field, then spray insecticide if threshold exceeded"
+    },
+    "risk_levels": {
+      "Low": "No immediate action, continue monitoring",
+      "Medium": "Increase monitoring frequency, prepare sprays",
+      "High": "Spray immediately, repeat in 7-10 days if needed"
+    }
+  },
+
+  "weather_alerts": {
+    "description": "Generate alerts based on weather forecast for next 5 days",
+    "alerts": {
+      "high_wind": {
+        "condition": "Wind speed > 40 km/h",
+        "action": "Do not spray. Wait for calm conditions.",
+        "reason": "Spray drift, reduced efficacy"
+      },
+      "heavy_rain": {
+        "condition": "Rainfall forecast > 30mm",
+        "action": "Do not spray. Wash off will reduce effectiveness.",
+        "reason": "Loss of chemical due to runoff"
+      },
+      "frost_risk": {
+        "condition": "Temperature < 0°C forecast",
+        "action": "Protect sensitive crops (Chili, Tomato). Avoid spray.",
+        "reason": "Cold damage to foliage"
+      },
+      "extreme_heat": {
+        "condition": "Temperature > 35°C",
+        "action": "Avoid spray application, increase irrigation.",
+        "reason": "Heat stress, increased evapotranspiration"
+      },
+      "cloud_cover": {
+        "condition": "Cloudy, showers possible",
+        "action": "Spray in early morning before rain.",
+        "reason": "Optimal spray timing"
+      }
+    }
+  },
+
+  "crops": {
+    "Tomato": {
+      "growing_days": 120,
+      "water_demand": "High",
+      "ndvi_threshold_for_fertilize": 0.65,
+      "ndvi_threshold_for_spray": 0.68,
+      "optimal_temp_range": "22-28°C",
+      "critical_growth_stages": ["Flowering", "Fruiting"],
+      "fungal_diseases": "Leaf mold, early blight, late blight",
+      "pests": "Whitefly, spider mite, leaf miner",
+      "soil_moisture_critical": 30
+    },
+    "Wheat": {
+      "growing_days": 120,
+      "water_demand": "Moderate",
+      "ndvi_threshold_for_fertilize": 0.68,
+      "ndvi_threshold_for_spray": 0.70,
+      "optimal_temp_range": "20-25°C",
+      "critical_growth_stages": ["Vegetative", "Grain_Filling"],
+      "fungal_diseases": "Rust, powdery mildew",
+      "pests": "Armyworm, aphid",
+      "soil_moisture_critical": 35
+    },
+    "Paddy": {
+      "growing_days": 130,
+      "water_demand": "Very_High",
+      "ndvi_threshold_for_fertilize": 0.63,
+      "ndvi_threshold_for_spray": 0.65,
+      "optimal_temp_range": "25-30°C",
+      "standing_water_required": true,
+      "critical_growth_stages": ["Germination", "Vegetative"],
+      "fungal_diseases": "Blast, brown leaf spot, sheath blight",
+      "pests": "Stem borer, gall midge, plant hopper",
+      "soil_moisture_critical": 40
+    },
+    "Chili": {
+      "growing_days": 150,
+      "water_demand": "High",
+      "ndvi_threshold_for_fertilize": 0.65,
+      "ndvi_threshold_for_spray": 0.65,
+      "optimal_temp_range": "23-28°C",
+      "critical_growth_stages": ["Flowering", "Fruiting"],
+      "fungal_diseases": "Anthracnose, leaf spot",
+      "pests": "Thrips, aphid, spider mite",
+      "soil_moisture_critical": 30
+    },
+    "Cotton": {
+      "growing_days": 165,
+      "water_demand": "Moderate",
+      "ndvi_threshold_for_fertilize": 0.60,
+      "ndvi_threshold_for_spray": 0.62,
+      "optimal_temp_range": "24-30°C",
+      "critical_growth_stages": ["Flowering", "Boll_Dev"],
+      "fungal_diseases": "Leaf curl virus, leaf spot",
+      "pests": "Bollworm, whitefly, spider mite",
+      "soil_moisture_critical": 35
+    }
+  },
+
+  "decision_priority_when_multiple_actions_needed": {
+    "level_1_immediate": [
+      "Frost alert",
+      "Extreme wind (spray risk)",
+      "High disease pressure (spray)"
+    ],
+    "level_2_urgent_24h": [
+      "Irrigation (if soil moisture critical)",
+      "Fungicide spray (if humidity+temp+ndvi all align)"
+    ],
+    "level_3_routine": [
+      "Fertilizer application",
+      "Preventive spray"
+    ],
+    "level_4_planning": [
+      "Next review in N days",
+      "Monitor for pest scouts"
+    ]
+  },
+
+  "advisory_output_template": {
+    "structure": {
+      "field_id": "string",
+      "crop": "string",
+      "growth_stage": "string",
+      "date_generated": "timestamp",
+      "next_review_days": 3,
+      "decisions": {
+        "spray": {
+          "required": "boolean",
+          "chemicals": [
+            {
+              "name": "string",
+              "target": "pest or disease name",
+              "dose_ml_per_liter": "float",
+              "total_water_liters": "float",
+              "timing": "early_morning | late_evening",
+              "reason": "human-readable explanation",
+              "repeat_in_days": 7
+            }
+          ]
+        },
+        "fertilize": {
+          "required": "boolean",
+          "nutrients": [
+            {
+              "name": "string",
+              "dose_kg_per_acre": "float",
+              "method": "drip | broadcast | foliar",
+              "timing": "immediate | after_rain",
+              "reason": "human-readable explanation"
+            }
+          ]
+        },
+        "irrigate": {
+          "required": "boolean",
+          "method": "drip | sprinkler | flood",
+          "water_liters_per_acre": "float",
+          "water_hours": "float",
+          "timing": "immediate | tomorrow",
+          "reason": "human-readable explanation"
+        },
+        "weather_alerts": [
+          {
+            "alert": "string",
+            "action": "string",
+            "next_5_days": "string"
+          }
+        ]
+      },
+      "risk_assessment": {
+        "overall_risk_level": "Low | Medium | High",
+        "disease_risk": "Low | Medium | High",
+        "pest_risk": "Low | Medium | High",
+        "water_stress_risk": "Low | Medium | High",
+        "nutrient_stress_risk": "Low | Medium | High"
+      },
+      "rationale": "Detailed explanation of why these decisions were made"
+    }
+  },
+
+  "notes_for_implementation": {
+    "next_steps": [
+      "1. Validate all thresholds with agronomists for your regions",
+      "2. Add regional variance (rainfall patterns, soil types, temperature zones)"
+    ],
+    "accuracy_expectations": "70-75% accuracy."
+  }
+}
