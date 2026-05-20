@@ -1,0 +1,91 @@
+Crop,standard_yield,min_yield,max_yield,unit,season,notes
+Amla,60,30,120,Kg/Tree/Year,Perennial,Bearing starts from year 5-6; Chakaiya and Krishna varieties most common
+Apple,40,15,80,Kg/Tree/Year,Rabi,Suited to Himachal/J&K; yield rises significantly after year 8
+Arecanut,3.5,1.5,6,Kg/Tree/Year,Perennial,Dry nut weight; Kerala/Karnataka coastal belt; susceptible to yellow leaf disease
+Ash gourd,120,60,180,Quintals/Acre,Kharif,Long shelf life; grown for local and export market
+Banana,200,120,320,Tons/Acre,Perennial,Tissue culture plants yield higher; Grand Naine standard in Maharashtra/AP
+Barley,14,8,22,Quintals/Acre,Rabi,Malt barley commands premium; rainfed average closer to 10
+Beans,16,8,28,Quintals/Acre,Kharif,French/bush beans for vegetable; pole beans yield higher end
+Beetroot,100,55,160,Quintals/Acre,Rabi,Quick-cycle crop (~60 days); good returns in peri-urban farming
+Bitter gourd,40,18,70,Quintals/Acre,Kharif,Hybrid varieties push 60+; multiple pickings over season
+Black gram,6,3,10,Quintals/Acre,Kharif,Drought-tolerant; Rabi crop in south India; yield sensitive to waterlogging
+Black pepper,300,150,600,Kg/Acre,Perennial,Dried berry weight; yield drops sharply without proper vine support and irrigation
+Bottle gourd,90,45,150,Quintals/Acre,Kharif,Fast-growing; multiple harvests; hybrid varieties dominant
+Brinjal,100,45,170,Quintals/Acre,Kharif,Year-round in south; hybrid varieties standard in commercial cultivation
+Broccoli,60,30,100,Quintals/Acre,Rabi,Cool-season crop; limited to Rabi in plains; well-suited to hills year-round
+Cabbage,120,60,200,Quintals/Acre,Rabi,Compact hybrid heads; cool season essential for quality
+Capsicum,80,35,130,Quintals/Acre,Kharif,Colored capsicum (polyhouse) can reach 300+; open field values given here
+Carrot,100,55,160,Quintals/Acre,Rabi,Desi red variety dominates; Nantes type for export; sandy loam preferred
+Castor,8,4,14,Quintals/Acre,Kharif,Seed yield; Gujarat accounts for 80% of India production; hybrid GCH-7 standard
+Cauliflower,80,40,130,Quintals/Acre,Rabi,Timing critical — early/mid/late varieties; curd quality tied to temperature
+Celery,50,25,90,Quintals/Acre,Rabi,Niche crop; grown in UP hills and Punjab; petiole yield basis
+Chia,4,2,7,Quintals/Acre,Rabi,Emerging crop in MP/Rajasthan; yield data still consolidating in Indian context
+Chickpea,8,4,14,Quintals/Acre,Rabi,Largest pulse in India; desi > kabuli in area; JG-11 and PKV Kabuli common
+Chilli,60,30,100,Quintals/Acre,Kharif,Dry chilli weight; Guntur/Byadgi dominant; green chilli yield is ~5× higher in fresh weight
+Coconut,60,30,100,Kg/Tree/Year,Perennial,Copra equivalent; dwarf hybrids yield earlier (year 3); spacing affects per-acre count
+Coffee,800,400,1400,Kg/Acre,Perennial,Clean cherry weight; Arabica lower yield than Robusta; shade-grown standard
+Coriander,6,3,10,Quintals/Acre,Rabi,Seed yield; leaf yield is separate and much higher (50-80 Q/Acre for cut-and-come)
+Corn,22,12,35,Quintals/Acre,Kharif,Grain maize; sweet corn and baby corn are separate markets with different units
+Cotton,8,4,14,Quintals/Acre,Kharif,Seed cotton (kapas); not lint
+Cowpea,8,4,13,Quintals/Acre,Kharif,Dual-purpose (grain + fodder); heat-tolerant; south and central India
+Cucumber,70,35,120,Quintals/Acre,Kharif,European/seedless hybrids for polyhouse can reach 200+; open field values here
+Cumin,4,2,7,Quintals/Acre,Rabi,Very sensitive to humidity and blight; Rajasthan/Gujarat; yield highly variable
+Dragon fruit,40,20,80,Quintals/Acre,Perennial,Bearing from year 2; full yield from year 4; Maharashtra/Gujarat; night-blooming
+Drumstick,40,20,70,Kg/Tree/Year,Perennial,Pod weight; PKM-1 variety standard; south India year-round; north India seasonal
+Fenugreek,8,4,13,Quintals/Acre,Rabi,Seed yield; Rajasthan dominant; leaf crop yield counted separately
+Fig,50,25,90,Kg/Tree/Year,Perennial,Poona fig variety; Maharashtra; two crops/year (Bahar and Hasti)
+Finger millet,10,5,16,Quintals/Acre,Kharif,Karnataka/Uttarakhand staple; rainfed crop; nutritionally dense
+Garlic,40,20,65,Quintals/Acre,Rabi,Fresh bulb weight; MP/Rajasthan/Gujarat; seed cost is high input factor
+Ginger,80,40,130,Kg/Acre,Kharif,Fresh rhizome weight; Kerala/NE India/Karnataka; yield strongly tied to seed quality
+Grapes,120,60,200,Quintals/Acre,Perennial,Maharashtra (Nashik/Sangli) dominant; table grape vs raisin market differ; wire trellis standard
+Green gram,5,2.5,9,Quintals/Acre,Kharif,Short-duration pulse (60-70 days); also Zaid crop in many regions; drought tolerant
+Green peas,25,12,40,Quintals/Acre,Rabi,Fresh pod weight; Palam Priya/Arkel standard; hilly regions extend season
+Groundnut,12,6,20,Quintals/Acre,Kharif,Unshelled pod yield; Gujarat/AP/Rajasthan; irrigated bold-seeded varieties push 18+
+Guava,60,30,110,Kg/Tree/Year,Perennial,Allahabad Safeda standard; Lalit hybrid high-yielding; two crops/year possible
+Horse gram,6,3,10,Quintals/Acre,Kharif,Dryland crop; south India; low-input; yield modest but stable
+Jute,18,10,28,Quintals/Acre,Kharif,Dry fibre weight; West Bengal/Bihar/Assam; retting process affects quality
+Kidney beans,8,4,13,Quintals/Acre,Rabi,Rajma; J&K/HP/Uttarakhand hills; also grown in plains as Rabi pulse
+Kiwi,35,15,65,Kg/Tree/Year,Perennial,HP/Uttarakhand/Arunachal; Hayward dominant; full yield from year 7-8
+Lemon,50,25,90,Kg/Tree/Year,Perennial,Kagzi Kalan variety; multiple flushes/year; drip irrigation critical
+Lentil,7,3.5,12,Quintals/Acre,Rabi,Masoor; MP/UP/Bihar dominant; waterlogging very damaging
+Lettuce,60,30,100,Quintals/Acre,Rabi,Primarily polyhouse/protected cultivation; open field in hills; quick cycle (45-55 days)
+Linseed,6,3,10,Quintals/Acre,Rabi,Seed yield; MP/Chhattisgarh/UP; dual-use (oil + fibre)
+Long melon,60,30,100,Quintals/Acre,Zaid,Fresh fruit weight; north India summer crop; short cycle
+Mango,50,20,100,Kg/Tree/Year,Perennial,Alphonso/Dashehari/Langra dominant by region; alternate bearing is key challenge
+Mushroom,80,40,140,Quintals/Acre,Year-round,Button mushroom on per-bed basis; yield per cycle (~45 days); substrate quality critical
+Muskmelon,70,35,120,Quintals/Acre,Zaid,Riverbed/sandy soil cultivation; multiple picks; Hara Madhu standard variety
+Mustard,10,5,17,Quintals/Acre,Rabi,Seed yield; Rajasthan/UP/MP; PM-resistant varieties now available
+Niger,4,2,7,Quintals/Acre,Kharif,Oilseed; tribal belt MP/Chhattisgarh/Odisha; rainfed; low input but low yield
+Okra,40,18,70,Quintals/Acre,Kharif,Multiple pickings every 2-3 days; hybrid Parbhani Kranti standard; heat-tolerant
+Onion,100,50,160,Quintals/Acre,Rabi,Bulb yield; Maharashtra dominant; Kharif and late Kharif crops also grown
+Orange,60,30,110,Kg/Tree/Year,Perennial,Nagpur mandarin standard; alternate bearing common; canker management critical
+Papaya,200,100,350,Quintals/Acre,Perennial,Red Lady/Taiwan 786 dominant; year-round bearing; ringspot virus key risk
+Pearl millet,12,6,20,Quintals/Acre,Kharif,Bajra; Rajasthan/Gujarat/Haryana; dual use (grain + fodder); HHB-67 common hybrid
+Pineapple,140,80,220,Quintals/Acre,Perennial,Kew variety dominant; NE India/Kerala/Goa; ratoon crop possible
+Pomegranate,80,40,130,Quintals/Acre,Perennial,Bhagwa variety dominant; Maharashtra/Karnataka/AP; Bahar treatment for timing
+Potato,120,65,200,Quintals/Acre,Rabi,UP/Punjab/WB dominant; Kufri Jyoti and Kufri Pukhraj standard; storage variety matters
+Pumpkin,90,45,150,Quintals/Acre,Kharif,Multiple harvests; good shelf life; local and processing market
+Radish,80,40,130,Quintals/Acre,Rabi,Quick crop (25-35 days); Pusa Chetki for summer; Japanese White for Rabi
+Red gram,8,4,14,Quintals/Acre,Kharif,Tur/Arhar; Maharashtra/Karnataka/AP; ICPH-2671 hybrid popular; perennial types excluded
+Rice,22,12,32,Quintals/Acre,Kharif,HYV can reach 30+
+Rubber,800,500,1200,Kg/Acre,Perennial,Dry sheet rubber weight; Kerala dominant; yield rises from year 7 to peak at year 15
+Safflower,8,4,13,Quintals/Acre,Rabi,Oilseed; Maharashtra/Karnataka/AP; rainfed; alternate-row sowing common
+Sapota,70,35,120,Kg/Tree/Year,Perennial,Chikoo/Sapodilla; Gujarat/Maharashtra; 2-3 crops/year; Kalipatti variety standard
+Sesame,4,2,7,Quintals/Acre,Kharif,Til; Gujarat/Rajasthan/MP; extremely drought-sensitive at flowering
+Snake gourd,60,30,100,Quintals/Acre,Kharif,South India dominant; multiple picks; long-duration variety goes up to 6 ft
+Sorghum,14,7,22,Quintals/Acre,Kharif,Jowar; grain yield; dual-purpose (grain + fodder); Rabi jowar in south India
+Soybean,10,5,17,Quintals/Acre,Kharif,MP/Maharashtra/Rajasthan dominant; JS 9-52 and NRC-7 common; yellow mosaic virus key risk
+Spinach,60,30,100,Quintals/Acre,Rabi,Multiple cuttings (3-4) per crop; Pusa Jyoti standard; year-round in hills
+Sponge gourd,50,25,80,Quintals/Acre,Kharif,Turai; multiple picks; warm-season crop; south and central India
+Squash melon,70,35,120,Quintals/Acre,Zaid,Similar to muskmelon; sandy riverbed cultivation; short season
+Sugarcane,300,180,450,Tons/Acre,Perennial,Ratoon crop ~20% lower
+Summer squash,60,30,100,Quintals/Acre,Zaid,Zucchini type gaining market; polyhouse extends season; quick-cycle (50-60 days)
+Sunflower,8,4,14,Quintals/Acre,Kharif,Oilseed; Karnataka/AP/Maharashtra; KBSH-44 hybrid common; Rabi crop in AP/TS
+Sweet potato,80,40,130,Quintals/Acre,Kharif,Tuber yield; Odisha/WB/UP; Sree Bhadra variety; low-input dryland crop
+Tea,800,500,1200,Kg/Acre,Perennial,Made tea (processed) weight; Assam/Darjeeling/Nilgiris; plucking standard 2-leaves-and-bud
+Tobacco,12,6,20,Quintals/Acre,Rabi,Cured leaf weight; AP/Karnataka; FCV type dominant; heavily regulated crop
+Tomato,80,35,140,Quintals/Acre,Kharif,Hybrid varieties can exceed 150
+Turmeric,80,40,130,Kg/Acre,Kharif,Fresh rhizome (raw) weight; dry recovery ~20%; Erode/Nizamabad dominant; Duggirala variety
+Turnip,80,40,130,Quintals/Acre,Rabi,Quick-cycle root vegetable; north India; Purple Top White Globe standard
+Watermelon,120,60,200,Quintals/Acre,Zaid,Seedless hybrids now >50% market; riverbed alluvial soil preferred; Sugar Baby standard
+Wheat,18,10,28,Quintals/Acre,Rabi,Irrigated average ~22
