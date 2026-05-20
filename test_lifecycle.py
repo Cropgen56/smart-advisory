@@ -22,7 +22,7 @@ def build_payload(
             "typeOfFarming": "Inorganic",
             "typeOfIrrigation": "Drip"
         },
-        "language": "en",
+        "language": "hi",
         "platform": "web",
         "plantGrowthActivity": {
             "bbchStage": bbch,

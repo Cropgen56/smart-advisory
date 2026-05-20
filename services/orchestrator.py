@@ -59,7 +59,8 @@ def generate_full_advisory(request: AdvisoryRequestSchema) -> AdvisoryResponseSc
             
     water_stress_level = getattr(request.water, "stressLevel", "Low") if getattr(request, "water", None) else "Low"
     ndvi_trend = getattr(request.ndvi, "ndviTrend", 0.0) if getattr(request, "ndvi", None) else 0.0
-    
+    language = getattr(request, "language", "en") or "en"
+
     activities = []
     # 2. Get all 7 activities from Autonomous Engine
     if engine:
@@ -82,6 +83,7 @@ def generate_full_advisory(request: AdvisoryRequestSchema) -> AdvisoryResponseSc
             forecast_weather=forecast_weather,
             water_stress_level=water_stress_level,
             ndvi_trend=ndvi_trend,
+            language=language,
         )
         
         for ra in raw_activities:
@@ -92,10 +94,12 @@ def generate_full_advisory(request: AdvisoryRequestSchema) -> AdvisoryResponseSc
             ))
             
         if forecast_incomplete:
+            from core.i18n import I18n
+            _t = I18n(language)
             activities.append(ActivityToDo(
                 type="WEATHER",
-                title="System Alert: Incomplete Forecast",
-                message="Weather forecast data provided covers less than 5 days. Predictive alerts may be limited."
+                title=_t.get("system.incomplete_forecast_title"),
+                message=_t.get("system.incomplete_forecast")
             ))
     else:
         activities.append(ActivityToDo(type="MONITORING", title="System check", message="Advisory engine unavailable. Monitor crop manually."))

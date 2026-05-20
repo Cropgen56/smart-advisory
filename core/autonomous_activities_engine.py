@@ -11,6 +11,7 @@ Returns ALL 7 activity categories for every advisory call:
 
 from typing import List, Dict, Optional
 from core.knowledge import KnowledgeBaseManager
+from core.i18n import I18n
 
 
 class ActivitiesEngine:
@@ -50,6 +51,7 @@ class ActivitiesEngine:
         forecast_weather: Optional[Dict[str, List[float]]] = None,
         water_stress_level: str = "Low",
         ndvi_trend: float = 0.0,
+        language: str = "en",
     ) -> List[Dict]:
         """
         Generate ALL 7 activity categories matching the frontend layout.
@@ -63,7 +65,7 @@ class ActivitiesEngine:
         """
         # ── Resolve crop name (handles aliases: Paddy→Rice, Chili→Chilli, etc.)
         if not self.kb.is_known_crop(crop):
-            return self._unknown_crop_defaults(crop)
+            return self._unknown_crop_defaults(crop, language)
 
         # Canonical display name (proper-cased Excel column name)
         display_name = self.kb.get_display_name(crop)
@@ -72,30 +74,31 @@ class ActivitiesEngine:
         crop_kb = self.kb.get_crop(crop)
 
         is_organic = farming_type.lower() == "organic"
+        t = I18n(language)
 
         activities = [
             self._decide_spray(
                 display_name, crop_kb, crop_health_percent, ndvi,
                 humidity, temperature, bbch_stage, rainfall_forecast,
-                wind_speed, is_organic,
+                wind_speed, is_organic, t,
             ),
             self._decide_fertigation(
                 display_name, crop_kb, crop_health_percent, ndvi,
-                bbch_stage, soil_moisture, is_organic,
+                bbch_stage, soil_moisture, is_organic, t,
             ),
             self._decide_irrigation(
                 display_name, crop_kb, soil_moisture,
-                rainfall_forecast, irrigation_type, acre, water_stress_level,
+                rainfall_forecast, irrigation_type, acre, water_stress_level, t,
             ),
             self._decide_weather(
-                temperature, humidity, rainfall_forecast, wind_speed, forecast_weather,
+                temperature, humidity, rainfall_forecast, wind_speed, forecast_weather, t,
             ),
             self._decide_crop_risk(
                 display_name, crop_kb, crop_health_percent, ndvi,
-                humidity, temperature, is_organic,
+                humidity, temperature, is_organic, t,
             ),
-            self._decide_monitoring(display_name, crop_kb, crop_health_percent, ndvi, ndvi_trend),
-            self._decide_carbon_tracking(carbon_emission, carbon_captured, carbon_net),
+            self._decide_monitoring(display_name, crop_kb, crop_health_percent, ndvi, ndvi_trend, t),
+            self._decide_carbon_tracking(carbon_emission, carbon_captured, carbon_net, t),
         ]
 
         return activities
@@ -107,13 +110,15 @@ class ActivitiesEngine:
         self, crop: str, crop_kb: Dict, health_pct: float, ndvi: float,
         humidity: float, temperature: float, bbch_stage: int,
         rainfall_forecast: float, wind_speed: float, is_organic: bool,
+        t: I18n,
     ) -> Dict:
-        
+
         # ── Harvest Safety
         if bbch_stage >= 85:
             return {
-                "type": "SPRAY", "title": "Harvest Safety — Stop Sprays",
-                "message": "Crop is approaching harvest. Stop all chemical sprays to prevent residue on the final product. Monitor manually.",
+                "type": "SPRAY",
+                "title": t.get("spray.harvest_safety_title"),
+                "message": t.get("spray.harvest_safety_message"),
             }
 
         ndvi_threshold  = crop_kb.get("ndvi_threshold_for_spray", 0.65)
@@ -124,43 +129,35 @@ class ActivitiesEngine:
         # ── Block: high wind
         if wind_speed > 40:
             return {
-                "type": "SPRAY", "title": "No spray today",
-                "message": (
-                    f"Do not spray today. Wind speed {wind_speed:.0f} km/h is too high. "
-                    f"Wait for calm conditions (below 40 km/h)."
-                ),
+                "type": "SPRAY",
+                "title": t.get("spray.high_wind_title"),
+                "message": t.get("spray.high_wind_message", wind_speed=f"{wind_speed:.0f}"),
             }
 
         # ── Block: rain expected
         if rainfall_forecast > 20:
             return {
-                "type": "SPRAY", "title": "No spray today",
-                "message": (
-                    f"Do not spray today. Rain expected ({rainfall_forecast:.0f} mm). "
-                    f"Chemicals will wash off — skip spray today."
-                ),
+                "type": "SPRAY",
+                "title": t.get("spray.rain_block_title"),
+                "message": t.get("spray.rain_block_message", rainfall=f"{rainfall_forecast:.0f}"),
             }
 
         # ── Organic farms
         if is_organic:
             if health_pct < 80 or ndvi < ndvi_threshold:
                 return {
-                    "type": "SPRAY", "title": "Organic pest management",
-                    "message": (
-                        f"Organic farm — no chemical spray. "
-                        f"Use neem oil or approved biopesticide per local organic practice. "
-                        f"Health {health_pct:.0f}%, NDVI {ndvi:.3f}."
-                    ),
+                    "type": "SPRAY",
+                    "title": t.get("spray.organic_risk_title"),
+                    "message": t.get("spray.organic_risk_message",
+                                     health=f"{health_pct:.0f}", ndvi=f"{ndvi:.3f}"),
                 }
             return {
-                "type": "SPRAY", "title": "No spray today",
-                "message": (
-                    "Organic farm — no chemical spray needed today. "
-                    "Continue monitoring using neem oil or biopesticides as preventive practice."
-                ),
+                "type": "SPRAY",
+                "title": t.get("spray.organic_ok_title"),
+                "message": t.get("spray.organic_ok_message"),
             }
 
-        # ── RULE 1: Fungal risk (uses per-crop humidity & temp thresholds from Excel)
+        # ── RULE 1: Fungal risk
         fungal_risk = (
             humidity >= crit_humidity
             and fungal_temp_min <= temperature <= fungal_temp_max
@@ -170,13 +167,13 @@ class ActivitiesEngine:
             fungicide = crop_kb.get("primary_fungicide", "Mancozeb 75% WP")
             dose_str  = self._format_dose(crop_kb.get("fungicide_dosage_ml_per_l", 2.0))
             return {
-                "type": "SPRAY", "title": "Fungal risk — spray recommended",
-                "message": (
-                    f"Apply {fungicide} at {dose_str}. "
-                    f"Timing: Morning (6–10 AM). "
-                    f"Reason: Fungal risk — humidity {humidity:.0f}% (threshold {crit_humidity:.0f}%), "
-                    f"temp {temperature:.0f}°C, NDVI {ndvi:.3f} below threshold {ndvi_threshold:.2f}."
-                ),
+                "type": "SPRAY",
+                "title": t.get("spray.fungal_title"),
+                "message": t.get("spray.fungal_message",
+                                  chemical=fungicide, dose=dose_str,
+                                  humidity=f"{humidity:.0f}", crit_humidity=f"{crit_humidity:.0f}",
+                                  temp=f"{temperature:.0f}", ndvi=f"{ndvi:.3f}",
+                                  ndvi_threshold=f"{ndvi_threshold:.2f}"),
                 "chemical": fungicide,
                 "dose": dose_str,
                 "timing": "early_morning",
@@ -187,25 +184,21 @@ class ActivitiesEngine:
             insecticide = crop_kb.get("primary_insecticide", "Chlorpyrifos 20%EC")
             dose_str    = self._format_dose(crop_kb.get("insecticide_dosage_ml_per_l", 2.0))
             return {
-                "type": "SPRAY", "title": "Pest infestation — spray recommended",
-                "message": (
-                    f"Apply {insecticide} at {dose_str}. "
-                    f"Timing: Evening (4–6 PM). "
-                    f"Reason: Pest pressure — health at {health_pct:.0f}%, NDVI dropped to {ndvi:.3f}."
-                ),
+                "type": "SPRAY",
+                "title": t.get("spray.pest_title"),
+                "message": t.get("spray.pest_message",
+                                  chemical=insecticide, dose=dose_str,
+                                  health=f"{health_pct:.0f}", ndvi=f"{ndvi:.3f}"),
                 "chemical": insecticide,
                 "dose": dose_str,
                 "timing": "late_evening",
             }
 
         # ── No spray needed
-        if wind_speed > 20:
-            reason = "Moderate wind — spray conditions not ideal. Monitor closely."
-        else:
-            reason = "Disease pressure low. No chemical spray needed. Continue regular monitoring."
-
+        reason = t.get("spray.moderate_wind_message") if wind_speed > 20 else t.get("spray.no_spray_message")
         return {
-            "type": "SPRAY", "title": "No spray today",
+            "type": "SPRAY",
+            "title": t.get("spray.no_spray_title"),
             "message": reason,
         }
 
@@ -215,13 +208,15 @@ class ActivitiesEngine:
     def _decide_fertigation(
         self, crop: str, crop_kb: Dict, health_pct: float, ndvi: float,
         bbch_stage: int, soil_moisture: float, is_organic: bool,
+        t: I18n,
     ) -> Dict:
-        
+
         # ── Agronomic Safety: No fertigation during Ripening/Harvesting (BBCH 80+)
         if bbch_stage >= 80:
             return {
-                "type": "FERTIGATION", "title": "No fertigation needed (Ripening Stage)",
-                "message": "Crop is in the ripening/harvest phase. Withholding fertilizer to ensure natural maturity and avoid late-stage residue.",
+                "type": "FERTIGATION",
+                "title": t.get("fertigation.ripening_title"),
+                "message": t.get("fertigation.ripening_message"),
             }
 
         ndvi_threshold = crop_kb.get("ndvi_threshold_for_fertilize", 0.60)
@@ -230,47 +225,37 @@ class ActivitiesEngine:
         if is_organic:
             if needs_fert:
                 return {
-                    "type": "FERTIGATION", "title": "Organic fertilizer",
-                    "message": (
-                        f"Apply organic compost or vermicompost. "
-                        f"Reason: NDVI {ndvi:.3f} (target ≥ {ndvi_threshold:.2f}), health {health_pct:.0f}%. "
-                        f"Method: Broadcast or drip-compatible organic liquid. "
-                        f"Timing: Morning (6–10 AM)."
-                    ),
+                    "type": "FERTIGATION",
+                    "title": t.get("fertigation.organic_needed_title"),
+                    "message": t.get("fertigation.organic_needed_message",
+                                     ndvi=f"{ndvi:.3f}", ndvi_threshold=f"{ndvi_threshold:.2f}",
+                                     health=f"{health_pct:.0f}"),
                 }
             return {
-                "type": "FERTIGATION", "title": "Organic fertilizer",
-                "message": "No organic fertigation needed today. Nutrients balanced.",
+                "type": "FERTIGATION",
+                "title": t.get("fertigation.organic_ok_title"),
+                "message": t.get("fertigation.organic_ok_message"),
             }
 
         if needs_fert:
-            nutrient  = self._get_fertilizer_for_crop(crop, bbch_stage, crop_kb)
-            dose_kg   = self._get_fertilizer_dose(nutrient, crop_kb)
-            timing    = "tomorrow" if soil_moisture > 30 else "today_evening"
-            method    = (
-                "Dissolve in water, apply through drip system. "
-                "Run drip 30–45 min after injection."
-            )
+            nutrient = self._get_fertilizer_for_crop(crop, bbch_stage, crop_kb)
+            dose_kg  = self._get_fertilizer_dose(nutrient, crop_kb)
+            timing   = "tomorrow" if soil_moisture > 30 else "today_evening"
             return {
-                "type": "FERTIGATION", "title": "Inorganic (chemical) fertilizer",
-                "message": (
-                    f"Chemical: {nutrient} — {dose_kg} kg/acre. "
-                    f"Morning (6–10 AM), dissolve product, then fertigation or broadcast with irrigation.\n"
-                    f"Fertilizer: {nutrient}  |  Qty: {dose_kg} kg/acre\n"
-                    f"Method: {method}\n"
-                    f"Timing: Morning (6–10 AM), dissolve product, then fertigation or broadcast with irrigation."
-                ),
+                "type": "FERTIGATION",
+                "title": t.get("fertigation.inorganic_title"),
+                "message": t.get("fertigation.inorganic_message",
+                                  nutrient=nutrient, dose=dose_kg),
                 "nutrient": nutrient,
                 "dose": f"{dose_kg} kg/acre",
                 "timing": timing,
             }
 
         return {
-            "type": "FERTIGATION", "title": "No fertigation needed",
-            "message": (
-                f"Nutrient levels adequate. NDVI {ndvi:.3f} ≥ threshold {ndvi_threshold:.2f}. "
-                f"No fertigation required today."
-            ),
+            "type": "FERTIGATION",
+            "title": t.get("fertigation.none_title"),
+            "message": t.get("fertigation.none_message",
+                              ndvi=f"{ndvi:.3f}", ndvi_threshold=f"{ndvi_threshold:.2f}"),
         }
 
     # ------------------------------------------------------------------
@@ -279,58 +264,54 @@ class ActivitiesEngine:
     def _decide_irrigation(
         self, crop: str, crop_kb: Dict, soil_moisture: float,
         rainfall_forecast: float, irrigation_type: str, acre: float,
-        water_stress_level: str,
+        water_stress_level: str, t: I18n,
     ) -> Dict:
 
         sm_critical = crop_kb.get("soil_moisture_critical", 35.0)
         ideal_range = crop_kb.get("ideal_range", "50-70%")
         method = irrigation_type or "Drip"
-        
+
         # Severe water stress alert overrides everything
         if water_stress_level.lower() in ["high", "severe"]:
             return {
-                "type": "IRRIGATION", "title": "Urgent: Water Stress Detected",
-                "message": (
-                    f"Sensor indicates {water_stress_level.lower()} water stress. "
-                    f"Immediate irrigation required to prevent permanent wilting."
-                ),
+                "type": "IRRIGATION",
+                "title": t.get("irrigation.stress_title"),
+                "message": t.get("irrigation.stress_message",
+                                  stress_level=water_stress_level.lower()),
                 "method": method,
                 "timing": "immediately",
             }
 
         if rainfall_forecast > 20:
             return {
-                "type": "IRRIGATION", "title": "Irrigation Schedule",
-                "message": (
-                    f"Skip irrigation. Rain expected ({rainfall_forecast:.0f} mm in next 5 days). "
-                    f"Soil moisture at {soil_moisture:.0f}%."
-                ),
+                "type": "IRRIGATION",
+                "title": t.get("irrigation.skip_rain_title"),
+                "message": t.get("irrigation.skip_rain_message",
+                                  rainfall=f"{rainfall_forecast:.0f}",
+                                  soil_moisture=f"{soil_moisture:.0f}"),
             }
 
         if soil_moisture < sm_critical:
             water_hours = self._calculate_water_hours(soil_moisture, crop_kb)
-            water_mm    = round(water_hours * 13)  # rough estimate
+            water_mm    = round(water_hours * 13)
             method      = irrigation_type or "Drip"
             return {
-                "type": "IRRIGATION", "title": "Irrigation Schedule",
-                "message": (
-                    f"Give {method.lower()} irrigation for about {water_hours:.1f} hours today. "
-                    f"(~{water_mm} mm)\n"
-                    f"Qty: {water_mm} mm  |  Method: {method}/Sprinkler ~{int(water_hours * 60)} min  |  "
-                    f"Time: Morning (6–10 AM)"
-                ),
+                "type": "IRRIGATION",
+                "title": t.get("irrigation.needed_title"),
+                "message": t.get("irrigation.needed_message",
+                                  method=method, hours=f"{water_hours:.1f}",
+                                  mm=water_mm, minutes=int(water_hours * 60)),
                 "method": method,
                 "water_hours": water_hours,
                 "timing": "today_morning",
             }
 
         return {
-            "type": "IRRIGATION", "title": "Irrigation Schedule",
-            "message": (
-                f"Soil moisture adequate at {soil_moisture:.0f}% "
-                f"(ideal range {ideal_range}). "
-                f"No immediate irrigation needed. Next check in 2–3 days."
-            ),
+            "type": "IRRIGATION",
+            "title": t.get("irrigation.ok_title"),
+            "message": t.get("irrigation.ok_message",
+                              soil_moisture=f"{soil_moisture:.0f}",
+                              ideal_range=ideal_range),
         }
 
     # ------------------------------------------------------------------
@@ -340,53 +321,53 @@ class ActivitiesEngine:
         self, temperature: float, humidity: float,
         rainfall_forecast: float, wind_speed: float,
         forecast: Optional[Dict[str, List[float]]] = None,
+        t: I18n = None,
     ) -> Dict:
+        if t is None:
+            t = I18n("en")
 
         alerts = []
-        # Check current conditions
         if temperature > 35:
-            alerts.append(f"Max temp {temperature:.1f}°C today. Monitor for heat stress.")
+            alerts.append(t.get("weather.heat_today", temp=f"{temperature:.1f}"))
         if temperature < 5:
-            alerts.append(f"Low temp {temperature:.1f}°C. Watch for frost risk on sensitive crops.")
+            alerts.append(t.get("weather.frost_today", temp=f"{temperature:.1f}"))
         if rainfall_forecast > 30:
-            alerts.append(f"Heavy rain ({rainfall_forecast:.0f} mm) expected. Delay spray until 2 days after rain.")
+            alerts.append(t.get("weather.heavy_rain", rainfall=f"{rainfall_forecast:.0f}"))
         if wind_speed > 30:
-            alerts.append(f"High wind ({wind_speed:.0f} km/h). Do not spray.")
+            alerts.append(t.get("weather.high_wind_today", wind=f"{wind_speed:.0f}"))
         if humidity > 85:
-            alerts.append(f"Very high humidity ({humidity:.0f}%). Increased fungal disease risk.")
+            alerts.append(t.get("weather.high_humidity", humidity=f"{humidity:.0f}"))
 
         # Check forecast arrays if provided
         if forecast:
-            # Operational alerts (3 days lookahead)
             wind_forecast = forecast.get("wind_speed", [])
             if any(w > 40 for w in wind_forecast[:3]):
                 day_idx = next(i for i, w in enumerate(wind_forecast[:3]) if w > 40)
-                alerts.append(f"High wind (>40 km/h) forecasted in {day_idx + 1} days. Delay sprays.")
-            
-            # Trend alerts (5 days lookahead)
+                alerts.append(t.get("weather.forecast_wind", days=day_idx + 1))
+
             temp_max = forecast.get("temp_max", [])
-            if any(t > 38 for t in temp_max[:5]):
-                day_idx = next(i for i, t in enumerate(temp_max[:5]) if t > 38)
-                alerts.append(f"Heatwave risk (>38°C) expected in {day_idx + 1} days. Ensure deep irrigation beforehand.")
-                
+            if any(tmp > 38 for tmp in temp_max[:5]):
+                day_idx = next(i for i, tmp in enumerate(temp_max[:5]) if tmp > 38)
+                alerts.append(t.get("weather.forecast_heatwave", days=day_idx + 1))
+
             temp_min = forecast.get("temp_min", [])
-            if any(t < 4 for t in temp_min[:5]):
-                day_idx = next(i for i, t in enumerate(temp_min[:5]) if t < 4)
-                alerts.append(f"Frost risk (<4°C) expected in {day_idx + 1} days. Protect sensitive crops.")
+            if any(tmp < 4 for tmp in temp_min[:5]):
+                day_idx = next(i for i, tmp in enumerate(temp_min[:5]) if tmp < 4)
+                alerts.append(t.get("weather.forecast_frost", days=day_idx + 1))
 
         if alerts:
-            title = "High temperature alert" if temperature > 35 else "Weather alert"
+            title = t.get("weather.heat_alert_title") if temperature > 35 else t.get("weather.alert_title")
             return {
                 "type": "WEATHER", "title": title,
                 "message": " ".join(alerts),
             }
 
         return {
-            "type": "WEATHER", "title": "Weather update",
-            "message": (
-                f"Temp {temperature:.1f}°C, humidity {humidity:.0f}%, "
-                f"wind {wind_speed:.0f} km/h. Conditions normal. No weather alerts."
-            ),
+            "type": "WEATHER",
+            "title": t.get("weather.update_title"),
+            "message": t.get("weather.update_message",
+                              temp=f"{temperature:.1f}", humidity=f"{humidity:.0f}",
+                              wind=f"{wind_speed:.0f}"),
         }
 
     # ------------------------------------------------------------------
@@ -395,6 +376,7 @@ class ActivitiesEngine:
     def _decide_crop_risk(
         self, crop: str, crop_kb: Dict, health_pct: float, ndvi: float,
         humidity: float, temperature: float, is_organic: bool,
+        t: I18n,
     ) -> Dict:
 
         ndvi_threshold  = crop_kb.get("ndvi_threshold_for_spray", 0.65)
@@ -404,7 +386,6 @@ class ActivitiesEngine:
         diseases        = crop_kb.get("primary_fungal_disease", "Fungal diseases")
         pests           = crop_kb.get("primary_pest", "Common pests")
 
-        # Calculate risk score using per-crop thresholds
         risk_score = 0
         if humidity >= crit_humidity:
             risk_score += 2
@@ -417,30 +398,24 @@ class ActivitiesEngine:
 
         if risk_score >= 5:
             risk_level = "High"
-            if is_organic:
-                msg = (
-                    f"Organic farm. High risk detected. "
-                    f"Use approved biocontrol or neem-based products only — no synthetic sprays.\n"
-                    f"Watch for: {diseases}. Common pests: {pests}."
-                )
-            else:
-                msg = (
-                    f"High disease/pest risk. Common diseases: {diseases}. "
-                    f"Common pests: {pests}. Scout field and spray if threshold exceeded."
-                )
+            msg = (
+                t.get("crop_risk.high_organic_message", diseases=diseases, pests=pests)
+                if is_organic
+                else t.get("crop_risk.high_message", diseases=diseases, pests=pests)
+            )
+            title = t.get("crop_risk.high_title")
         elif risk_score >= 3:
             risk_level = "Medium"
-            msg = (
-                f"Moderate risk. Watch for: {diseases}. "
-                f"Increase monitoring frequency. Prepare sprays if symptoms appear."
-            )
+            msg = t.get("crop_risk.medium_message", diseases=diseases)
+            title = t.get("crop_risk.medium_title")
         else:
             risk_level = "Low"
-            msg = "Disease pressure low. No chemical spray needed. Continue regular monitoring."
+            msg = t.get("crop_risk.low_message")
+            title = t.get("crop_risk.low_title")
 
         return {
             "type": "CROP_RISK",
-            "title": f"{risk_level} disease risk",
+            "title": title,
             "message": msg,
             "risk_level": risk_level,
         }
@@ -449,34 +424,32 @@ class ActivitiesEngine:
     # 6. MONITORING
     # ------------------------------------------------------------------
     def _decide_monitoring(
-        self, crop: str, crop_kb: Dict, health_pct: float, ndvi: float, ndvi_trend: float,
+        self, crop: str, crop_kb: Dict, health_pct: float, ndvi: float,
+        ndvi_trend: float, t: I18n,
     ) -> Dict:
         tips = []
-        
+
         if ndvi_trend <= -0.05:
-            tips.append(
-                f"URGENT: NDVI has dropped sharply (trend {ndvi_trend:.3f}). "
-                "Immediate field scouting required to identify cause (pest/disease/water stress)."
-            )
+            tips.append(t.get("monitoring.ndvi_drop_urgent", ndvi_trend=f"{ndvi_trend:.3f}"))
         else:
-            tips.append("Check lower leaves, stem base, and new growth for any stress or pest signs.")
+            tips.append(t.get("monitoring.routine_check"))
 
         if health_pct < 70:
-            tips.append(f"Health is low ({health_pct:.0f}%). Look for yellowing, wilting, or lesions.")
+            tips.append(t.get("monitoring.low_health", health=f"{health_pct:.0f}"))
         if ndvi < 0.5:
-            tips.append(f"NDVI very low ({ndvi:.3f}). Inspect canopy density and leaf color.")
+            tips.append(t.get("monitoring.low_ndvi", ndvi=f"{ndvi:.3f}"))
 
         pests = crop_kb.get("primary_pest", "")
         if pests:
-            tips.append(f"Watch for: {pests}.")
+            tips.append(t.get("monitoring.watch_pest", pests=pests))
 
         diseases = crop_kb.get("primary_fungal_disease", "")
         if diseases:
-            tips.append(f"Monitor for: {diseases}.")
+            tips.append(t.get("monitoring.watch_disease", diseases=diseases))
 
         return {
             "type": "MONITORING",
-            "title": "Crop monitoring",
+            "title": t.get("monitoring.title"),
             "message": " ".join(tips),
         }
 
@@ -485,59 +458,66 @@ class ActivitiesEngine:
     # ------------------------------------------------------------------
     def _decide_carbon_tracking(
         self, emission: float, captured: float, net: float,
+        t: I18n,
     ) -> Dict:
         if net < 0:
-            balance_msg = f"Net CO2 balance positive: {abs(net):.1f} kg CO2 captured."
+            balance_msg = t.get("carbon.positive_balance", amount=f"{abs(net):.1f}")
         else:
-            balance_msg = f"Net CO2 balance: {net:.1f} kg CO2 emitted."
+            balance_msg = t.get("carbon.negative_balance", amount=f"{net:.1f}")
 
         return {
             "type": "CARBON_TRACKING",
-            "title": "Carbon tracking update",
-            "message": (
-                f"Emissions: {emission:.1f} kg CO2, "
-                f"Captured: {captured:.1f} kg CO2, "
-                f"Net: {net:.1f} kg CO2. {balance_msg}"
-            ),
+            "title": t.get("carbon.title"),
+            "message": t.get("carbon.message",
+                              emission=f"{emission:.1f}", captured=f"{captured:.1f}",
+                              net=f"{net:.1f}", balance=balance_msg),
         }
 
     # ------------------------------------------------------------------
     # UNKNOWN CROP FALLBACK
     # ------------------------------------------------------------------
-    def _unknown_crop_defaults(self, crop: str) -> List[Dict]:
+    def _unknown_crop_defaults(self, crop: str, language: str = "en") -> List[Dict]:
         """
         Returned when a crop is not found in the knowledge base even after
         alias resolution. Gives safe, generic guidance instead of crashing.
+        Uses i18n so non-English users also get a translated response.
         """
-        note = f"Crop '{crop}' is not in the knowledge base."
+        t = I18n(language)
         return [
             {
-                "type": "SPRAY", "title": "No spray today",
-                "message": f"{note} Monitor spray conditions manually.",
+                "type": "SPRAY",
+                "title": t.get("spray.no_spray_title"),
+                "message": t.get("unknown.spray_message", crop=crop),
             },
             {
-                "type": "FERTIGATION", "title": "No fertigation needed",
-                "message": f"{note} No fertilizer recommendation available. Consult an agronomist.",
+                "type": "FERTIGATION",
+                "title": t.get("fertigation.none_title"),
+                "message": t.get("unknown.fertigation_message", crop=crop),
             },
             {
-                "type": "IRRIGATION", "title": "Irrigation Schedule",
-                "message": f"{note} Check soil moisture manually and irrigate if below 35%.",
+                "type": "IRRIGATION",
+                "title": t.get("irrigation.ok_title"),
+                "message": t.get("unknown.irrigation_message", crop=crop),
             },
             {
-                "type": "WEATHER", "title": "Weather update",
-                "message": "Check local weather forecast for alerts.",
+                "type": "WEATHER",
+                "title": t.get("weather.update_title"),
+                "message": t.get("unknown.weather_message"),
             },
             {
-                "type": "CROP_RISK", "title": "Unknown risk",
-                "message": f"{note} Monitor for pests and disease manually.",
+                "type": "CROP_RISK",
+                "title": t.get("unknown.crop_risk_title"),
+                "message": t.get("unknown.crop_risk_message", crop=crop),
             },
             {
-                "type": "MONITORING", "title": "Crop monitoring",
-                "message": "Inspect crop visually. Report any stress signs.",
+                "type": "MONITORING",
+                "title": t.get("monitoring.title"),
+                "message": t.get("unknown.monitoring_message"),
             },
             {
-                "type": "CARBON_TRACKING", "title": "Carbon tracking update",
-                "message": "No carbon tracking data available for this crop.",
+                "type": "CARBON_TRACKING",
+                "title": t.get("carbon.title"),
+                "message": t.get("unknown.carbon_message"),
             },
         ]
 

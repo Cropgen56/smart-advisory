@@ -1,0 +1,17 @@
+# ── Web framework
+fastapi==0.115.7
+uvicorn[standard]==0.34.0
+starlette==0.45.3
+
+# ── Data validation
+pydantic==2.10.6
+
+# ── Data / Excel
+openpyxl==3.1.5
+pandas==2.2.3
+
+# ── HTTP client (used by TestClient in tests)
+httpx==0.28.1
+
+# ── Form data parsing (FastAPI dependency)
+python-multipart==0.0.20

@@ -31,7 +31,7 @@ def build_payload(
             "typeOfFarming": farming_type,
             "typeOfIrrigation": "Drip"
         },
-        "language": "en",
+        "language": "hi",
         "platform": "web",
         "weather": {
             "current": {
