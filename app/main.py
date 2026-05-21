@@ -8,7 +8,7 @@ from routes import router
 app = FastAPI(
     title="CropGen Advisory Engine",
     description="Backend API for generating autonomous crop advisories.",
-    version="1.0.0"
+    version="2.0.0"
 )
 
 # Configure CORS 
